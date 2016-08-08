@@ -1315,6 +1315,12 @@ URL="http://noflush.example.com/mod_pagespeed_test/slow_flushing_html_response.p
 check_flushing "curl -N --raw --silent --proxy $SECONDARY_HOSTNAME $URL" \
   5.4 1
 
+start_test Special responses from php are handled OK.
+URL="http://special-response.example.com/A.foo.css.pagespeed.cf.0.css"
+OUT=$(http_proxy=$SECONDARY_HOSTNAME $WGET_DUMP -S --content-on-error $URL 2>&1) || true
+check_from "$OUT" fgrep -qi '404'
+check_from "$OUT" fgrep -q "PHP with a call to flush"
+
 start_test Shutting down.
 
 # Fire up some heavy load if ab is available to test a stressed shutdown
@@ -1397,6 +1403,7 @@ OUT=$(cat "$ERROR_LOG" \
     | grep -v "\\[warn\\].*Controller process .* exited with status code.*" \
     | grep -v "\\[warn\\].*Rewrite.*failed.*.pagespeed....0.foo.*" \
     | grep -v "\\[warn\\].*A.blue.css.*but cannot access the original.*" \
+    | grep -v "\\[warn\\].*special-response.*foo.css.*but cannot access the original.*" \
     || true)
 
 check [ -z "$OUT" ]
